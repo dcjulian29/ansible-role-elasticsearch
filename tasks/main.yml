@@ -1,0 +1,65 @@
+---
+- name: Ensure max_map_count is configured to specified value
+  ansible.posix.sysctl:
+    name: vm.max_map_count
+    value: "{{ elasticsearch_max_map_count }}"
+    state: present
+
+- name: Ensure Elasticsearch group is present
+  ansible.builtin.group:
+    gid: "{{ elasticsearch_gid }}"
+    name: "{{ elasticsearch_user }}"
+    state: present
+
+- name: Ensure Elasticsearch user is present
+  ansible.builtin.user:
+    create_home: false
+    home: "{{ elasticsearch_data_dir }}"
+    group: "{{ elasticsearch_gid }}"
+    name: "{{ elasticsearch_user }}"
+    shell: /sbin/nologin
+    system: true
+    uid: "{{ elasticsearch_uid }}"
+
+- name: Ensure the data directory exists
+  ansible.builtin.file:
+    path: "{{ elasticsearch_data_dir }}"
+    state: directory
+    owner: "{{ elasticsearch_uid }}"
+    group: "{{ elasticsearch_gid }}"
+    mode: "0770"
+
+- name: Pull specified Elasticsearch docker image
+  community.docker.docker_image:
+    name: "{{ elasticsearch_image }}"
+    source: pull
+    tag: "{{ elasticsearch_version }}"
+  notify: Remove Elasticsearch
+
+- name: Ensure all handlers run before continuing
+  ansible.builtin.meta: flush_handlers
+
+- name: Build environment variables for container
+  ansible.builtin.set_fact:
+    elasticsearch_env: "{{ (elasticsearch_env | combine(item.env)) if item.apply else elasticsearch_env }}"
+  loop: "{{ elasticsearch_config }}"
+
+- name: Ensure Elasticsearch container is created
+  community.docker.docker_container:
+    container_default_behavior: no_defaults
+    detach: true
+    env: "{{ elasticsearch_env }}"
+    image: "{{ elasticsearch_image }}:{{ elasticsearch_version }}"
+    interactive: false
+    memory_swappiness: 0
+    name: "{{ elasticsearch_name }}"
+    ports: "{{ elasticsearch_ports if elasticsearch_expose else '[]' }}"
+    pull: false
+    restart_policy: always
+    state: present
+    volumes: "{{ elasticsearch_volume }}"
+    ulimits:
+      - nofile:65535:65535
+      - memlock:-1:-1
+    user: "{{ elasticsearch_uid }}"
+  notify: Restart Elasticsearch

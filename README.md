@@ -15,6 +15,8 @@ To use, use `requirements.yml` with the following git source:
 ```yaml
 ---
 roles:
+- name: dcjulian29.docker
+  src: https://github.com/dcjulian29/ansible-role-docker.git
 - name: dcjulian29.elasticsearch
   src: https://github.com/dcjulian29/ansible-role-elasticsearch.git
   ```

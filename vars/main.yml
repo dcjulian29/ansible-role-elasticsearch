@@ -1,0 +1,26 @@
+---
+elasticsearch_config:
+  - env: "{{ elasticsearch_env_base }}"
+    apply: true
+  - env: "{{ elasticsearch_env_single }}"
+    apply: "{{ elasticsearch_nodes | length == 0 }}"
+  - env: "{{ elasticsearch_env_cluster }}"
+    apply: "{{ elasticsearch_nodes | length > 0 }}"
+  - env: "{{ elasticsearch_env_additional }}"
+    apply: "{{ elasticsearch_env_additional | length > 0 }}"
+elasticsearch_env: { }
+elasticsearch_env_base:
+  TZ: "{{ ansible_date_time.tz }}"
+  ES_LOG_STYLE: "console"
+  node.name: "{{ elasticsearch_node_name }}"
+  cluster.name: "{{ elasticsearch_cluster_name }}"
+  xpack.security.enabled: "{{ elasticsearch_xpack_security | quote | string | lower }}"
+  bootstrap.memory_lock: "{{ elasticsearch_bootstrap_memory_lock | quote | string | lower }}"
+elasticsearch_env_cluster:
+  discovery.seed_hosts: "{{ elasticsearch_nodes | select('ne', elasticsearch_node_name) | join(',') }}"
+  cluster.initial_master_nodes: "{{ elasticsearch_nodes | join(',') }}"
+elasticsearch_env_single:
+  discovery.type: single-node
+elasticsearch_ports:
+  - "{{ elasticsearch_port_http }}:9200"
+  - "{{ elasticsearch_port_transport }}:9300"

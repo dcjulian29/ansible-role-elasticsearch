@@ -17,7 +17,7 @@ elasticsearch_port_http: 9200
 elasticsearch_port_transport: 9300
 elasticsearch_uid: 701
 elasticsearch_user: elastic
-elasticsearch_version: "8.8.2"
+elasticsearch_version: "8.14.0"
 elasticsearch_volume:
   - "{{ elasticsearch_data_dir }}:/usr/share/elasticsearch/data"
 elasticsearch_xpack_security: false

@@ -17,10 +17,11 @@ elasticsearch_env_base:
   xpack.security.enabled: "{{ elasticsearch_xpack_security | quote | string | lower }}"
   bootstrap.memory_lock: "{{ elasticsearch_bootstrap_memory_lock | quote | string | lower }}"
 elasticsearch_env_cluster:
+  network.publish_host: "{{ ansible_default_ipv4.address }}"
+  http.publish_host: "{{ ansible_default_ipv4.address }}"
+  transport.publish_host: "{{ ansible_default_ipv4.address }}"
   discovery.seed_hosts: "{{ elasticsearch_nodes | select('ne', elasticsearch_node_name) | join(',') }}"
   cluster.initial_master_nodes: "{{ elasticsearch_nodes | join(',') }}"
-  discovery.type: zen
-  discovery.zen.ping.unicast.hosts: "{{ elasticsearch_discovery_hosts | join(',') }}"
 elasticsearch_env_single:
   discovery.type: single-node
 elasticsearch_ports:
